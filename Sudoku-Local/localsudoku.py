@@ -254,38 +254,6 @@ def generate_neighbor(puzzle):
 
     return neighbor
 
-def find_most_conflicted_area(puzzle):
-    max_conflicts = 0
-    most_conflicted_area = ('row', 0)  # Default to first row
-
-    # Check each row
-    for row in range(9):
-        row_conflicts = sum(puzzle.count_conflicts(row, col) for col in range(9))
-        if row_conflicts > max_conflicts:
-            max_conflicts = row_conflicts
-            most_conflicted_area = ('row', row)
-
-    # Check each column
-    for col in range(9):
-        col_conflicts = sum(puzzle.count_conflicts(row, col) for row in range(9))
-        if col_conflicts > max_conflicts:
-            max_conflicts = col_conflicts
-            most_conflicted_area = ('col', col)
-
-    # Check each grid
-    for grid in range(9):
-        grid_conflicts = 0
-        start_row, start_col = puzzle.get_row_column(grid, 0)
-        for cell in range(9):
-            row, col = puzzle.get_row_column(grid, cell)
-            grid_conflicts += puzzle.count_conflicts(row, col)
-        if grid_conflicts > max_conflicts:
-            max_conflicts = grid_conflicts
-            most_conflicted_area = ('grid', grid)
-
-    return most_conflicted_area
-
-
 if __name__ == "__main__":
 
     # Check the input arguments (should just be the puzzle file)

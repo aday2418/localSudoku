@@ -16,7 +16,7 @@ def student_name():
     #MODIFY THIS TO RETURN YOUR NAME
 
     #Change to be your name
-    return 'Cosmo Cougar'
+    return 'Alison Day'
 
 class LCell():
     """
@@ -182,11 +182,109 @@ class LSudoku():
 
 def local_search(puzzle):
     #Solve the puzzle using local search techniques
-    
-    # YOUR CODE HERE
+    initialize_puzzle(puzzle)
 
-    #Didn't solve the puzzle
+    # Set a limit to the number of iterations to prevent infinite loops
+    max_iterations = 10000
+    for _ in range(max_iterations):
+        current_conflicts = puzzle.objective()
+
+        # Check if the puzzle is solved
+        if current_conflicts == 0:
+            return puzzle
+
+        # Generate a neighbor
+        neighbor = generate_neighbor(puzzle)
+
+        # Check if the neighbor is better
+        if neighbor.objective() < current_conflicts:
+            puzzle.copy_puzzle(neighbor)
+
+    # Didn't solve the puzzle
     return None
+
+def initialize_puzzle(puzzle):
+    for row in range(9):
+        for col in range(9):
+            if not puzzle.cells[row][col].fixed:
+                possible_values = list(range(1, 10))
+                random.shuffle(possible_values)
+                for value in possible_values:
+                    if not has_conflict(puzzle, row, col, value):
+                        puzzle.cells[row][col].assign_value(value)
+                        break
+
+def has_conflict(puzzle, row, col, value):
+    # Check row and column
+    for i in range(9):
+        if puzzle.cells[row][i].value == value or puzzle.cells[i][col].value == value:
+            return True
+
+    # Check 3x3 grid
+    start_row, start_col = 3 * (row // 3), 3 * (col // 3)
+    for r in range(start_row, start_row + 3):
+        for c in range(start_col, start_col + 3):
+            if puzzle.cells[r][c].value == value:
+                return True
+
+    return False
+
+def generate_neighbor(puzzle):
+    neighbor = LSudoku()
+    neighbor.copy_puzzle(puzzle)
+
+    # Ensure that the selected row has at least two swappable cells
+    valid_row = False
+    for _ in range(100):  # Limit attempts to find a valid row
+        row = random.randint(0, 8)
+        swappable_cells = [i for i in range(9) if not neighbor.cells[row][i].fixed]
+        if len(swappable_cells) >= 2:
+            valid_row = True
+            break
+
+    if not valid_row:
+        # If no valid row is found, return the original puzzle as the neighbor
+        return puzzle
+
+    col1, col2 = random.sample(swappable_cells, 2)
+
+    # Swap two values
+    neighbor.cells[row][col1].value, neighbor.cells[row][col2].value = \
+        neighbor.cells[row][col2].value, neighbor.cells[row][col1].value
+
+    return neighbor
+
+def find_most_conflicted_area(puzzle):
+    max_conflicts = 0
+    most_conflicted_area = ('row', 0)  # Default to first row
+
+    # Check each row
+    for row in range(9):
+        row_conflicts = sum(puzzle.count_conflicts(row, col) for col in range(9))
+        if row_conflicts > max_conflicts:
+            max_conflicts = row_conflicts
+            most_conflicted_area = ('row', row)
+
+    # Check each column
+    for col in range(9):
+        col_conflicts = sum(puzzle.count_conflicts(row, col) for row in range(9))
+        if col_conflicts > max_conflicts:
+            max_conflicts = col_conflicts
+            most_conflicted_area = ('col', col)
+
+    # Check each grid
+    for grid in range(9):
+        grid_conflicts = 0
+        start_row, start_col = puzzle.get_row_column(grid, 0)
+        for cell in range(9):
+            row, col = puzzle.get_row_column(grid, cell)
+            grid_conflicts += puzzle.count_conflicts(row, col)
+        if grid_conflicts > max_conflicts:
+            max_conflicts = grid_conflicts
+            most_conflicted_area = ('grid', grid)
+
+    return most_conflicted_area
+
 
 if __name__ == "__main__":
 

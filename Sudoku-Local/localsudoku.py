@@ -193,7 +193,6 @@ def local_search(puzzle):
         if current_conflicts == 0:
             return puzzle
 
-        # Generate a neighbor
         neighbor = generate_neighbor(puzzle)
 
         # Check if the neighbor is better
@@ -204,15 +203,89 @@ def local_search(puzzle):
     return None
 
 def initialize_puzzle(puzzle):
-    for row in range(9):
-        for col in range(9):
-            if not puzzle.cells[row][col].fixed:
-                possible_values = list(range(1, 10))
-                random.shuffle(possible_values)
-                for value in possible_values:
-                    if not has_conflict(puzzle, row, col, value):
-                        puzzle.cells[row][col].assign_value(value)
-                        break
+    empty_cells = [(row, col) for row in range(9) for col in range(9) if not puzzle.cells[row][col].fixed]
+    
+    while empty_cells:
+        # Select the most constrained cell
+        row, col = select_most_constrained_cell(puzzle, empty_cells)
+        empty_cells.remove((row, col))
+
+        # Assign the least constraining value to this cell
+        value = select_least_constraining_value(puzzle, row, col)
+        if value is not None:
+            puzzle.cells[row][col].assign_value(value)
+        else:
+            #Wrong
+            break
+
+def select_least_constraining_value(puzzle, row, col):
+    possible_values = get_possible_values(puzzle, row, col)
+    least_constraining_value = None
+    min_constrains = float('inf')
+
+    for value in possible_values:
+        constrains = count_constrains(puzzle, row, col, value)
+        if constrains < min_constrains:
+            min_constrains = constrains
+            least_constraining_value = value
+
+    return least_constraining_value
+
+def get_possible_values(puzzle, row, col):
+    if puzzle.cells[row][col].fixed:
+        # If the cell is fixed, it already has a value, and no other values are possible
+        return {puzzle.cells[row][col].value}
+
+    possible_values = set(range(1, 10))  # A set of all possible values (1-9)
+
+    # Eliminate values based on the same row
+    for c in range(9):
+        if puzzle.cells[row][c].value in possible_values:
+            possible_values.remove(puzzle.cells[row][c].value)
+
+    # Eliminate values based on the same column
+    for r in range(9):
+        if puzzle.cells[r][col].value in possible_values:
+            possible_values.remove(puzzle.cells[r][col].value)
+
+    # Eliminate values based on the same 3x3 grid
+    start_row, start_col = 3 * (row // 3), 3 * (col // 3)
+    for r in range(start_row, start_row + 3):
+        for c in range(start_col, start_col + 3):
+            if puzzle.cells[r][c].value in possible_values:
+                possible_values.remove(puzzle.cells[r][c].value)
+
+    return possible_values
+
+def count_constrains(puzzle, row, col, value):
+    constrains = 0
+
+    for i in range(9):
+        if i != col and value in get_possible_values(puzzle, row, i):
+            constrains += 1
+        if i != row and value in get_possible_values(puzzle, i, col):
+            constrains += 1
+
+    start_row, start_col = 3 * (row // 3), 3 * (col // 3)
+    for r in range(start_row, start_row + 3):
+        for c in range(start_col, start_col + 3):
+            if (r != row or c != col) and value in get_possible_values(puzzle, r, c):
+                constrains += 1
+
+    return constrains
+
+def select_most_constrained_cell(puzzle, empty_cells):
+    min_options = 10
+    selected_cell = empty_cells[0]
+
+    for cell in empty_cells:
+        row, col = cell
+        options = get_possible_values(puzzle, row, col)
+        if 0 < len(options) < min_options:
+            min_options = len(options)
+            selected_cell = cell
+
+    return selected_cell
 
 def has_conflict(puzzle, row, col, value):
     # Check row and column

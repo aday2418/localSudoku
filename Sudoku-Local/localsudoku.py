@@ -181,21 +181,18 @@ class LSudoku():
 # it is an object of the Sudoku puzzle class [Sudoku]
 
 def local_search(puzzle):
-    #Solve the puzzle using local search techniques
+    
     initialize_puzzle(puzzle)
-
-    # Set a limit to the number of iterations to prevent infinite loops
     max_iterations = 10000
+
     for _ in range(max_iterations):
         current_conflicts = puzzle.objective()
 
-        # Check if the puzzle is solved
         if current_conflicts == 0:
             return puzzle
 
         neighbor = generate_neighbor(puzzle)
 
-        # Check if the neighbor is better
         if neighbor.objective() < current_conflicts:
             puzzle.copy_puzzle(neighbor)
 
@@ -206,17 +203,14 @@ def initialize_puzzle(puzzle):
     empty_cells = [(row, col) for row in range(9) for col in range(9) if not puzzle.cells[row][col].fixed]
     
     while empty_cells:
-        # Select the most constrained cell
         row, col = select_most_constrained_cell(puzzle, empty_cells)
         empty_cells.remove((row, col))
 
-        # Assign the least constraining value to this cell
         value = select_least_constraining_value(puzzle, row, col)
         if value is not None:
             puzzle.cells[row][col].assign_value(value)
         else:
-            #Wrong
-            break
+            break 
 
 def select_least_constraining_value(puzzle, row, col):
     possible_values = get_possible_values(puzzle, row, col)
@@ -233,22 +227,18 @@ def select_least_constraining_value(puzzle, row, col):
 
 def get_possible_values(puzzle, row, col):
     if puzzle.cells[row][col].fixed:
-        # If the cell is fixed, it already has a value, and no other values are possible
         return {puzzle.cells[row][col].value}
 
-    possible_values = set(range(1, 10))  # A set of all possible values (1-9)
+    possible_values = set(range(1, 10)) 
 
-    # Eliminate values based on the same row
     for c in range(9):
         if puzzle.cells[row][c].value in possible_values:
             possible_values.remove(puzzle.cells[row][c].value)
 
-    # Eliminate values based on the same column
     for r in range(9):
         if puzzle.cells[r][col].value in possible_values:
             possible_values.remove(puzzle.cells[r][col].value)
 
-    # Eliminate values based on the same 3x3 grid
     start_row, start_col = 3 * (row // 3), 3 * (col // 3)
     for r in range(start_row, start_row + 3):
         for c in range(start_col, start_col + 3):
@@ -288,12 +278,10 @@ def select_most_constrained_cell(puzzle, empty_cells):
     return selected_cell
 
 def has_conflict(puzzle, row, col, value):
-    # Check row and column
     for i in range(9):
         if puzzle.cells[row][i].value == value or puzzle.cells[i][col].value == value:
             return True
 
-    # Check 3x3 grid
     start_row, start_col = 3 * (row // 3), 3 * (col // 3)
     for r in range(start_row, start_row + 3):
         for c in range(start_col, start_col + 3):
@@ -306,9 +294,8 @@ def generate_neighbor(puzzle):
     neighbor = LSudoku()
     neighbor.copy_puzzle(puzzle)
 
-    # Ensure that the selected row has at least two swappable cells
     valid_row = False
-    for _ in range(100):  # Limit attempts to find a valid row
+    for _ in range(100):  
         row = random.randint(0, 8)
         swappable_cells = [i for i in range(9) if not neighbor.cells[row][i].fixed]
         if len(swappable_cells) >= 2:
@@ -316,12 +303,10 @@ def generate_neighbor(puzzle):
             break
 
     if not valid_row:
-        # If no valid row is found, return the original puzzle as the neighbor
         return puzzle
 
     col1, col2 = random.sample(swappable_cells, 2)
 
-    # Swap two values
     neighbor.cells[row][col1].value, neighbor.cells[row][col2].value = \
         neighbor.cells[row][col2].value, neighbor.cells[row][col1].value
 
